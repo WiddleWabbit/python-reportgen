@@ -6,15 +6,7 @@ import shutil
 import math
 
 from PIL import Image
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
-from reportlab.platypus import Paragraph
-
+from Report import ReportGenerator
 
 # Requirements PyPDF2, Pillow, ReportLab
 
@@ -169,39 +161,8 @@ def check_and_create_folder(folder_path):
 def format_filename(folder_path):
     folder_name = folder_path.replace('/', '_')
     folder_name = folder_name.replace(' ', '_')
+
     return folder_name
-
-
-def add_header_footer(report, page_num):
-    # Set the width of the line
-    report.setLineWidth(0.5)
-    # Colours are RGB colours / 256
-    report.setStrokeColorRGB(0.34375, 0.296875, 0.4375)
-
-    # Draw header line
-    x_start, y_start = 20 * mm, 270 * mm
-    x_end, y_end = 190 * mm, 270 * mm
-    report.line(x_start, y_start, x_end, y_end)
-
-    # Draw footer line
-    x_start, y_start = 20 * mm, 20 * mm
-    x_end, y_end = 190 * mm, 20 * mm
-    report.line(x_start, y_start, x_end, y_end)
-
-    # Add the logo
-    report.drawImage(escaped_export + "\\Assets\\SkinElementsLogo.jpg", 20 * mm, 274 * mm, 46 * mm, 12.451 * mm)
-
-    # Add the footer text
-    report.setFont('OpenSans-Light', 10.5)
-    report.setFillColorRGB(0, 0.539, 0.625)
-    report.drawString(20 * mm, 12 * mm, str(page_num) + " |", charSpace=1)
-    report.setFillColorRGB(0.34375, 0.296875, 0.4375)
-    report.drawString(25 * mm, 12 * mm, " SKIN ELEMENTS LIMITED |", charSpace=1)
-    report.setFillColorRGB(0, 0.539, 0.625)
-    report.drawString(78 * mm, 12 * mm, " FACE UV ANALYSIS ", charSpace=1)
-
-    return report
-
 
 def euclidean_distance(color1, color2):
     # Calculate the Euclidean distance between two RGB colors.
@@ -291,31 +252,16 @@ try:
     # --- CREATE PHOTO PAGES --- #
 
     # Create the page
-    report = canvas.Canvas(export_pdf, pagesize=A4)
-    # Set width and height variables for use
-    w, h = A4
-    # Register Fonts
-    pdfmetrics.registerFont(TTFont('Calibri', 'Calibri.ttf'))
-    pdfmetrics.registerFont(TTFont('Calibri Bold', 'Calibrib.ttf'))
-    pdfmetrics.registerFont(TTFont('OpenSans-Bold', escaped_export + "\\Assets\\OpenSans-Bold.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-BoldItalic', escaped_export + "\\Assets\\OpenSans-BoldItalic.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-ExtraBold', escaped_export + "\\Assets\\OpenSans-ExtraBold.ttf"))
-    pdfmetrics.registerFont(
-        TTFont('OpenSans-ExtraBoldItalic', escaped_export + "\\Assets\\OpenSans-ExtraBoldItalic.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-Italic', escaped_export + "\\Assets\\OpenSans-Italic.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-Light', escaped_export + "\\Assets\\OpenSans-Light.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-LightItalic', escaped_export + "\\Assets\\OpenSans-LightItalic.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-Medium', escaped_export + "\\Assets\\OpenSans-Medium.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-MediumItalic', escaped_export + "\\Assets\\OpenSans-MediumItalic.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-Regular', escaped_export + "\\Assets\\OpenSans-Regular.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-SemiBold', escaped_export + "\\Assets\\OpenSans-SemiBold.ttf"))
-    pdfmetrics.registerFont(TTFont('OpenSans-SemiBoldItalic', escaped_export + "\\Assets\\OpenSans-SemiBoldItalic.ttf"))
+    report = ReportGenerator(export_pdf, escaped_export + "\\Assets\\")
+
     # Set some colours
+    ###
     black = (0, 0, 0)
     dark_grey = (0.1, 0.1, 0.1)
     white = (255, 255, 255)
     skn_blue = (0, 0.539, 0.625)
     skn_purple = (0.34375, 0.296875, 0.4375)
+    ###
 
     # Create pages for the images and place in the image on them
     i = 1
@@ -336,247 +282,139 @@ try:
             # Closest Colour is Black, Therefore this is the UV Image
             if distance1 < distance2:
 
-                # Add the image, width and height are in points converted to mm
-                report.drawImage(export_folder + "Image_" + str(i) + ".jpg", 0, 0 * mm, 210 * mm, 297 * mm)
-
-                # Place a rectangle on top of the image
-                report.setFillColorRGB(1, 1, 1, alpha=0.5)
-                report.rect(0, 0, 45 * mm, 6 * mm, fill=True, stroke=False)
+                report.add_img(0, 0, 210, 297, export_folder + "Image_" + str(i) + ".jpg")
+                report.add_rect(0, 0, 45, 6, report.colours["white"], 0.5, True, False)
 
                 # Add the UV Spots Data
-                report.setFont('OpenSans-Bold', 9)
-                report.setFillColorRGB(0, 0, 0)
-                report.drawString(8 * mm, 1.5 * mm, "Feature Count: " + data["UV Spots"])
-
+                report.add_text(8, 1.5, "Feature Count: " + data["UV Spots"], "SKN-Caption")
 
             # Closest Colour is White, Therefore this is a regular image
             else:
 
                 # Add the image, width and height are in points converted to mm
-                report.drawImage(export_folder + "Image_" + str(i) + ".jpg", 0, 0 * mm, 210 * mm, 297 * mm)
+                report.add_img(0, 0, 210, 297, export_folder + "Image_" + str(i) + ".jpg")
+                # report.drawImage(export_folder + "Image_" + str(i) + ".jpg", 0, 0 * mm, 210 * mm, 297 * mm)
 
             # Move to the next page
-            report.showPage()
+            report.add_page()
 
             # Iterate to next image
             i = i + 1
 
     # --- FIRST REPORT PAGE --- #
 
-    styles = getSampleStyleSheet()
-    # Create a custom style based on an existing style
-    body_style = ParagraphStyle(
-        name='Body-1',
-        parent=styles['Normal'],
-        fontName='OpenSans-Regular',
-        wordWrap='default',
-        textColor=colors.Color(*dark_grey),
-        fontSize=9,
-    )
-    styles.add(body_style)
-
-    # Set a page number for reference in footer
-    page_num = 1
     # Add the header and footer to this page
-    report = add_header_footer(report, page_num)
+    report.add_header_footer()
 
     # Title Section
-    report.setFont('OpenSans-ExtraBold', 32)
-    report.setFillColorRGB(*skn_blue)
-    report.drawString(20 * mm, 252 * mm, "UV Face Analysis")
+    report.add_text(20, 252, "UV Face Analysis", "SKN-Title")
+    report.add_text(20, 243, "Skin Elements Limited", "SKN-Sub-Title")
 
-    report.setFont('OpenSans-BoldItalic', 15)
-    report.setFillColorRGB(*skn_purple)
-    report.drawString(20 * mm, 243 * mm, "Skin Elements Limited")
+    report.add_text(20, 228, "Patient Name:", "SKN-Heading")
+    report.add_text(100, 228, data['name'], "SKN-Heading")
 
-    # Paitent Name & Date Section
-    report.setFont('OpenSans-Bold', 13.75)
-    report.setFillColorRGB(*black)
-    report.drawString(20 * mm, 228 * mm, "Paitent Name:")
-    report.drawString(100 * mm, 228 * mm, data['name'])
-
-    report.setFont('OpenSans-Regular', 11)
-    report.setFillColorRGB(*black)
-    report.drawString(20 * mm, 222 * mm, "Analysis Date:")
-    report.drawString(100 * mm, 222 * mm, data['date'])
+    report.add_text(20, 222, "Analysis Date:", "SKN-Sub-Heading")
+    report.add_text(100, 222, data['date'], "SKN-Sub-Heading")
 
     # Add Photos
-    # report.drawImage(export_folder + "overview_0_0.jpg", 30*mm, 169*mm, 34.106*mm, 43.994*mm)
-    # report.drawImage(export_folder + "overview_1_0.jpg", 30*mm, 121*mm, 34.106*mm, 43.994*mm)
-    # report.drawImage(export_folder + "overview_2_0.jpg", 30*mm, 73*mm, 34.106*mm, 43.994*mm)
-    # report.drawImage(export_folder + "overview_3_0.jpg", 30*mm, 25*mm, 34.106*mm, 43.994*mm)
-
-    # Add Photos
-    report.drawImage(export_folder + "overview_0_0.jpg", 20 * mm, 129 * mm, 63.677 * mm, 82 * mm)
-    report.drawImage(export_folder + "overview_1_0.jpg", 20 * mm, 37 * mm, 63.677 * mm, 82 * mm)
+    report.add_img(20, 129, 63.677, 82, export_folder + "overview_0_0.jpg")
+    report.add_img(20, 37, 63.677, 82, export_folder + "overview_1_0.jpg")
 
     # Spot Analysis
-
     spot_analysis_text = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive."
     spot_analysis_text_1 = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive."
 
-    report.setFont('OpenSans-ExtraBold', 17)
-    report.setFillColorRGB(*skn_blue)
-    report.drawString(90 * mm, 201 * mm, "Spot Analysis")
+    report.add_text(90, 201, "Spot Analysis", "SKN-Coloured-Heading")
 
-    report.setFont('OpenSans-Bold', 12)
-    report.setFillColorRGB(*dark_grey)
-    report.drawString(90 * mm, 190 * mm, "Primary Spots Identified:")
-    report.drawString(170 * mm, 190 * mm, data['Spots'])
-
-    spot_analysis_p1 = Paragraph(spot_analysis_text, styles["Body-1"])
-    spot_analysis_p1.wrapOn(report, 90 * mm, 30 * mm)
-    spot_analysis_p1.drawOn(report, 90 * mm, 170 * mm)
-
-    report.setFont('OpenSans-Italic', 10)
-    report.setFillColorRGB(*dark_grey)
-    report.drawString(90 * mm, 163 * mm, "Subheading Goes Here:")
-
-    spot_analysis_p2 = Paragraph(spot_analysis_text_1, styles["Body-1"])
-    spot_analysis_p2.wrapOn(report, 90 * mm, 30 * mm)
-    spot_analysis_p2.drawOn(report, 90 * mm, 147 * mm)
+    report.add_text(90, 190, "Primary Spots Identified:", "SKN-Sub-Heading")
+    report.add_text(170, 190, data['Spots'], "SKN-Sub-Heading")
+    report.add_para(90, 170, 90, 30, spot_analysis_text, "SKN-Body")
+    report.add_text(90, 163, "Subheading Goes Here:", "SKN-Sub-Heading")
+    report.add_para(90, 147, 90, 30, spot_analysis_text_1, "SKN-Body")
 
     # Wrinkle Analysis
     wrinkle_analysis_text = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive."
     wrinkle_analysis_text_1 = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive."
 
-    report.setFont('OpenSans-ExtraBold', 17)
-    report.setFillColorRGB(*skn_blue)
-    report.drawString(90 * mm, 105 * mm, "Wrinkle Analysis")
+    report.add_text(90, 105, "Wrinkle Analysis", "SKN-Coloured-Heading")
 
-    report.setFont('OpenSans-Bold', 12)
-    report.setFillColorRGB(*dark_grey)
-    report.drawString(90 * mm, 95 * mm, "Wrinkles Identified:")
-    report.drawString(170 * mm, 95 * mm, data['Wrinkles'])
-
-    wrinkle_analysis_p1 = Paragraph(spot_analysis_text, styles["Body-1"])
-    wrinkle_analysis_p1.wrapOn(report, 90 * mm, 30 * mm)
-    wrinkle_analysis_p1.drawOn(report, 90 * mm, 75 * mm)
-
-    report.setFont('OpenSans-Italic', 10)
-    report.setFillColorRGB(*dark_grey)
-    report.drawString(90 * mm, 68 * mm, "Subheading Goes Here:")
-
-    wrinkle_analysis_p2 = Paragraph(spot_analysis_text_1, styles["Body-1"])
-    wrinkle_analysis_p2.wrapOn(report, 90 * mm, 30 * mm)
-    wrinkle_analysis_p2.drawOn(report, 90 * mm, 52 * mm)
+    report.add_text(90, 95, "Wrinkles Identified:", "SKN-Sub-Heading")
+    report.add_text(170, 95, data['Wrinkles'], "SKN-Sub-Heading")
+    report.add_para(90, 75, 90, 30, wrinkle_analysis_text, "SKN-Body")
+    report.add_text(90, 68, "Subheading Goes Here:", "SKN-Sub-Heading")
+    report.add_para(90, 52, 90, 30, wrinkle_analysis_text_1, "SKN-Body")
 
     # Move to the next page
-    report.showPage()
+    report.add_page()
+    report.inc_page_num()
 
     # --- SECOND REPORT PAGE --- #
 
-    # Set a page number for reference in footer
-    page_num = 2
     # Add the header and footer to this page
-    report = add_header_footer(report, page_num)
+    report.add_header_footer()
 
-    # Title Section
-    report.setFont('OpenSans-ExtraBold', 32)
-    report.setFillColorRGB(*skn_blue)
-    report.drawString(20 * mm, 252 * mm, "UV Face Analysis")
+    report.add_text(20, 252, "UV Face Analysis", "SKN-Title")
+    report.add_text(20, 243, "Skin Elements Limited", "SKN-Sub-Title")
 
-    report.setFont('OpenSans-BoldItalic', 15)
-    report.setFillColorRGB(*skn_purple)
-    report.drawString(20 * mm, 243 * mm, "Skin Elements Limited")
+    report.add_text(20, 228, "Patient Name:", "SKN-Heading")
+    report.add_text(100, 228, data['name'], "SKN-Heading")
 
-    # Paitent Name & Date Section
-    report.setFont('OpenSans-Bold', 13.75)
-    report.setFillColorRGB(*black)
-    report.drawString(20 * mm, 228 * mm, "Paitent Name:")
-    report.drawString(100 * mm, 228 * mm, data['name'])
-
-    report.setFont('OpenSans-Regular', 11)
-    report.setFillColorRGB(*black)
-    report.drawString(20 * mm, 222 * mm, "Analysis Date:")
-    report.drawString(100 * mm, 222 * mm, data['date'])
+    report.add_text(20, 222, "Analysis Date:", "SKN-Sub-Heading")
+    report.add_text(100, 222, data['date'], "SKN-Sub-Heading")
 
     # Add Photos
-    report.drawImage(export_folder + "overview_2_0.jpg", 20 * mm, 129 * mm, 63.677 * mm, 82 * mm)
-    report.drawImage(export_folder + "overview_3_0.jpg", 20 * mm, 37 * mm, 63.677 * mm, 82 * mm)
+    report.add_img(20, 129, 63.677, 82, export_folder + "overview_2_0.jpg")
+    report.add_img(20, 37, 63.677, 82, export_folder + "overview_3_0.jpg")
 
     # Texture Analysis
     texture_analysis_text = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive."
     texture_analysis_text_1 = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive."
 
-    report.setFont('OpenSans-ExtraBold', 17)
-    report.setFillColorRGB(*skn_blue)
-    report.drawString(90 * mm, 201 * mm, "Texture Analysis")
+    report.add_text(90, 201, "Texture Analysis", "SKN-Coloured-Heading")
 
-    report.setFont('OpenSans-Bold', 12)
-    report.setFillColorRGB(*dark_grey)
-    report.drawString(90 * mm, 190 * mm, "Texture Abnormalities:")
-    report.drawString(170 * mm, 190 * mm, data['Texture'])
+    report.add_text(90, 190, "Texture Abnormalities:", "SKN-Sub-Heading")
+    report.add_text(170, 190, data['Texture'], "SKN-Sub-Heading")
 
-    texture_analysis_p1 = Paragraph(spot_analysis_text, styles["Body-1"])
-    texture_analysis_p1.wrapOn(report, 90 * mm, 30 * mm)
-    texture_analysis_p1.drawOn(report, 90 * mm, 170 * mm)
-
-    report.setFont('OpenSans-Italic', 10)
-    report.setFillColorRGB(*dark_grey)
-    report.drawString(90 * mm, 163 * mm, "Subheading Goes Here:")
-
-    texture_analysis_p2 = Paragraph(texture_analysis_text_1, styles["Body-1"])
-    texture_analysis_p2.wrapOn(report, 90 * mm, 30 * mm)
-    texture_analysis_p2.drawOn(report, 90 * mm, 147 * mm)
+    report.add_para(90, 170, 90, 30, texture_analysis_text, "SKN-Body")
+    report.add_text(90, 163, "Subheading Goes Here:", "SKN-Sub-Heading")
+    report.add_para(90, 147, 90, 30, texture_analysis_text_1, "SKN-Body")
 
     # Pore Analysis
     pore_analysis_text = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive."
     pore_analysis_text_1 = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive."
 
-    report.setFont('OpenSans-ExtraBold', 17)
-    report.setFillColorRGB(*skn_blue)
-    report.drawString(90 * mm, 105 * mm, "Pore Analysis")
+    report.add_text(90, 105, "Pore Analysis", "SKN-Coloured-Heading")
 
-    report.setFont('OpenSans-Bold', 12)
-    report.setFillColorRGB(*dark_grey)
-    report.drawString(90 * mm, 95 * mm, "Enlarged Pores:")
-    report.drawString(170 * mm, 95 * mm, data['Pores'])
+    report.add_text(90, 95, "Enlarged Pores:", "SKN-Sub-Heading")
+    report.add_text(170, 95, data['Pores'], "SKN-Sub-Heading")
 
-    pore_analysis_p1 = Paragraph(pore_analysis_text, styles["Body-1"])
-    pore_analysis_p1.wrapOn(report, 90 * mm, 30 * mm)
-    pore_analysis_p1.drawOn(report, 90 * mm, 75 * mm)
-
-    report.setFont('OpenSans-Italic', 10)
-    report.setFillColorRGB(*dark_grey)
-    report.drawString(90 * mm, 68 * mm, "Subheading Goes Here:")
-
-    pore_analysis_p2 = Paragraph(pore_analysis_text_1, styles["Body-1"])
-    pore_analysis_p2.wrapOn(report, 90 * mm, 30 * mm)
-    pore_analysis_p2.drawOn(report, 90 * mm, 52 * mm)
+    report.add_para(90, 75, 90, 30, pore_analysis_text, "SKN-Body")
+    report.add_text(90, 68, "Subheading Goes Here:", "SKN-Sub-Heading")
+    report.add_para(90, 52, 90, 30, pore_analysis_text_1, "SKN-Body")
 
     # Move to the next page
-    report.showPage()
+    report.add_page()
+    report.inc_page_num()
 
     # --- THIRD REPORT PAGE --- #
 
-    # Set a page number for reference in footer
-    page_num = 3
     # Add the header and footer to this page
-    report = add_header_footer(report, page_num)
+    report.add_header_footer()
 
-    # Title Section
-    report.setFont('OpenSans-ExtraBold', 32)
-    report.setFillColorRGB(*skn_blue)
-    report.drawString(20 * mm, 252 * mm, "Important UV Information")
-
-    report.setFont('OpenSans-BoldItalic', 15)
-    report.setFillColorRGB(*skn_purple)
-    report.drawString(20 * mm, 243 * mm, "Skin Elements Limited")
+    report.add_text(20, 252, "Important UV Information", "SKN-Title")
+    report.add_text(20, 243, "Skin Elements Limited", "SKN-Sub-Title")
 
     # Paitent Name & Date Section
-    report.setFont('OpenSans-Bold', 13.75)
-    report.setFillColorRGB(*black)
-    report.drawString(20 * mm, 228 * mm, "Heading Goes Here")
+    report.add_text(20, 228, "Heading Goes Here", "SKN-Heading")
 
     # Paragraph 1
-    info_para1 = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive. We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive. We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive. We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to comprehensive."
-    pore_analysis_p1 = Paragraph(info_para1, styles["Body-1"])
-    pore_analysis_p1.wrapOn(report, 90 * mm, 30 * mm)
-    pore_analysis_p1.drawOn(report, 90 * mm, 75 * mm)
+    info_para1 = "We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to omprehensive.We want to empower people with comprehensive knowledge about what they apply to their skin. power people with power people with e want to omprehensive.We want to empower people with comprehensive knowledge about what they apply to their skin. "
+    report.add_para(20, 180, 70, 30, info_para1, "SKN-Body")
+
+    report.add_img(100, 175, 87.37, 46.443, escaped_export + "\\Assets\\UVB-Radiation-SPF.jpg")
 
     # Save the report (Overrides)
-    report.save()
+    report.save_report()
 
 except ValueError as e:
     print(f"Error: {e}")
