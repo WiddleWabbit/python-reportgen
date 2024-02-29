@@ -83,7 +83,7 @@ class ReportGenerator:
             fontName='OpenSans-Bold',
             wordWrap='none',
             textColor=self.colours["black"],
-            fontSize=13.75,
+            fontSize=12,
             charSpace=0,
         )
         sub_heading_style = ParagraphStyle(
@@ -148,40 +148,45 @@ class ReportGenerator:
         self.add_line(20, 190, 270, 270, 0.5, self.colours["purple"])
         self.add_line(20, 190, 20, 20, 0.5, self.colours["purple"])
         # Place the company logo
-        self.add_img(20, 274, 46, 12.451, self.asset_folder + "SkinElementsLogo.jpg")
+        self.add_img(20, 286, 46, 12.451, self.asset_folder + "SkinElementsLogo.jpg")
         # Place the Footer Text
-        self.add_text(20, 12, str(self.page_num) + " |", "SKN-Footer-Blue")
-        self.add_text(26, 12, " SKIN ELEMENTS LIMITED |", "SKN-Footer-Purple")
-        self.add_text(79, 12, " FACE UV ANALYSIS ", "SKN-Footer-Blue")
+        self.add_text(20, 18, str(self.page_num) + " |", "SKN-Footer-Blue")
+        self.add_text(26, 18, " SKIN ELEMENTS LIMITED |", "SKN-Footer-Purple")
+        self.add_text(79, 18, " FACE UV ANALYSIS ", "SKN-Footer-Blue")
 
     def add_rect(self, x, y, width, height, colour: tuple, opacity: float, fill: bool, stroke: bool):
         self.c.setFillColorRGB(*colour, alpha=opacity)
-        self.c.rect(x * mm, y * mm, width * mm, height * mm, fill=fill, stroke=stroke)
+        self.c.rect(x * mm, (y * mm) - (height * mm), width * mm, height * mm, fill=fill, stroke=stroke)
 
     def add_line(self, x_start, x_end, y_start, y_end, width, colour):
         self.c.setLineWidth(width)
-        self.c.setStrokeColorRGB(*colour)
+        self.c.setStrokeColorRGB(*colour, alpha=1)
         # Add the Line
         self.c.line(x_start * mm, y_start * mm, x_end * mm, y_end * mm)
 
     def add_text(self, x, y, text, style):
         style_info = self.styles[style]
+        # Calculate the height of the string
+        h = style_info.leading
         self.c.setFont(style_info.fontName, style_info.fontSize)
-        self.c.setFillColorRGB(*style_info.textColor)
-        char_spacing = f", charSpace={style_info.charSpace}"
-        # Place the specified text at the specified location
-        self.c.drawString(x * mm, y * mm, text, mode=0, charSpace=style_info.charSpace)
+        self.c.setFillColorRGB(*style_info.textColor, alpha=1)
+        # Place the specified text at the specified location (Place using top left corner not default of bottom left)
+        self.c.drawString(x * mm, (y * mm) - h, text, mode=0, charSpace=style_info.charSpace)
 
     def add_para(self, x, y, width, height, text, style):
         # Create a paragraph object containing the correct text in the right style
         para = Paragraph(text, self.styles[f"{style}"])
+        # Correct any alpha changes
+        self.c.setFillColorRGB(*self.styles[f"{style}"].textColor, alpha=1)
+        # Calculate the Height
+        h = self.styles[f"{style}"].leading * len(para.breakLines(width * mm).lines)
         # Wrap the paragraph in the bounding box defined here
         para.wrapOn(self.c, width * mm, height * mm)
-        # Place the paragraph
-        para.drawOn(self.c, x * mm, y * mm)
+        # Place the specified text at the specified location (Place using top left corner not default of bottom left)
+        para.drawOn(self.c, x * mm, (y * mm) - h)
 
     def add_img(self, x, y, width, height, file: str):
-        self.c.drawImage(file, x * mm, y * mm, width * mm, height * mm)
+        self.c.drawImage(file, x * mm, (y * mm) - (height * mm), width * mm, height * mm)
 
     def add_page(self):
         self.c.showPage()
