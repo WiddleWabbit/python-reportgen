@@ -230,8 +230,8 @@ try:
             print(fr"Resized image {jpg_file}")
             # Move the original file
             # --- UNDONE MOVE FOR DEV --- #
-            # shutil.move(jpg_file, export_folder + "Raw_Image_" + str(i) + ".jpg")
-            # print(fr"Moved image {jpg_file}")
+            shutil.move(jpg_file, export_folder + "Raw_Image_" + str(i) + ".jpg")
+            print(fr"Moved image {jpg_file}")
 
             i = i + 1
 
@@ -240,14 +240,14 @@ try:
 
             # Split this image into 8 sections
             split_image(jpg_file, export_folder)
+            shutil.move(jpg_file, export_folder + "Raw_Image_Overview.jpg")
+            print(fr"Moved image {jpg_file}")
 
     for pdf_file in pdf_files:
         # Move the pdf file to the new destination
         # --- UNDONE MOVE FOR DEV --- #
-        # shutil.move(pdf_file, export_folder + "raw_report.pdf")
-        # print(fr"Moved pdf {pdf_file}")
-        # Remove below line
-        i = i
+        shutil.move(pdf_file, export_folder + "raw_report.pdf")
+        print(fr"Moved pdf {pdf_file}")
 
     # --- CREATE PHOTO PAGES --- #
 
